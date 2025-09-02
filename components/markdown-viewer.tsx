@@ -1,7 +1,7 @@
 import React from "react"
 
-function renderInlineCode(text: string) {
-  const parts = text.split(/(`[^`]+`)/g)
+function renderMarkdownContent(text: string) {
+  const parts = text.split(/(`[^`]+`|\*\*.*?\*\*)/g)
   return parts.map((part, i) => {
     if (part.startsWith("`") && part.endsWith("`")) {
       const code = part.slice(1, -1)
@@ -10,6 +10,10 @@ function renderInlineCode(text: string) {
           {code}
         </code>
       )
+    }
+    if (part.startsWith("**") && part.endsWith("**")) {
+      const boldText = part.slice(2, -2)
+      return <strong key={i}>{boldText}</strong>
     }
     return <React.Fragment key={i}>{part}</React.Fragment>
   })
@@ -50,11 +54,16 @@ export function MarkdownViewer({ content }: { content: string }) {
           .filter(Boolean)
         return paras.length > 0 ? (
           <div key={idx} className="space-y-3">
-            {paras.map((p, i) => (
-              <p key={i} className="leading-relaxed">
-                {renderInlineCode(p)}
-              </p>
-            ))}
+            {paras.map((p, i) => {
+              if (/^={3,}\s*$/.test(p) || /^-{3,}\s*$/.test(p) || /^\*{3,}\s*$/.test(p)) {
+                return <hr key={i} className="my-4 border-border" />
+              }
+              return (
+                <p key={i} className="leading-relaxed">
+                  {renderMarkdownContent(p)}
+                </p>
+              )
+            })}
           </div>
         ) : null
       })}

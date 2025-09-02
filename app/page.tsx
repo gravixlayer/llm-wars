@@ -9,11 +9,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
-import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { ModelSelector } from "@/components/model-selector"
 import { ResponseCard } from "@/components/response-card"
 import { Label } from "@/components/ui/label"
+import { ThemeToggler } from "@/components/theme-toggler"
 
 type Model = { id: string; name?: string }
 
@@ -50,6 +50,12 @@ export default function Page() {
   const [byModel, setByModel] = useState<Record<string, StreamState>>({})
   const doneCountRef = useRef(0)
   const expectedModelsRef = useRef(0)
+
+  const handleReset = () => {
+    setPrompt("")
+    setByModel({})
+    setTotalMs(null)
+  }
 
   const tempNumber = useMemo(() => {
     const n = Number(temperature)
@@ -157,18 +163,13 @@ export default function Page() {
 
           try {
             const evt = JSON.parse(line)
-            console.log("Received event:", evt) // Debug log
 
-            if (evt.type === "start") {
-              console.log("Stream started for models:", evt.models)
-            } else if (evt.type === "model-start") {
-              console.log(`Model ${evt.modelId} started`)
+            if (evt.type === "model-start") {
               setByModel((s) => ({
                 ...s,
                 [evt.modelId]: { ...(s[evt.modelId] ?? { content: "" }), isComplete: false },
               }))
             } else if (evt.type === "ttfb") {
-              console.log(`TTFB for ${evt.modelId}: ${evt.ttfbMs}ms`)
               setByModel((s) => ({
                 ...s,
                 [evt.modelId]: { ...(s[evt.modelId] ?? { content: "" }), ttfbMs: evt.ttfbMs },
@@ -185,11 +186,6 @@ export default function Page() {
                 }
               })
             } else if (evt.type === "usage") {
-              console.log(`Usage for ${evt.modelId}:`, {
-                prompt: evt.promptTokens,
-                completion: evt.completionTokens,
-                total: evt.totalTokens,
-              })
               setByModel((s) => {
                 const prev = s[evt.modelId] ?? { content: "" }
                 return {
@@ -197,15 +193,14 @@ export default function Page() {
                   [evt.modelId]: {
                     ...prev,
                     tokens: {
-                      prompt: evt.promptTokens ?? prev.tokens?.prompt ?? null,
-                      completion: evt.completionTokens ?? prev.tokens?.completion ?? null,
-                      total: evt.totalTokens ?? prev.tokens?.total ?? null,
+                      prompt: evt.promptTokens,
+                      completion: evt.completionTokens,
+                      total: evt.totalTokens,
                     },
                   },
                 }
               })
             } else if (evt.type === "model-done") {
-              console.log(`Model ${evt.modelId} completed in ${evt.latencyMs}ms`)
               setByModel((s) => {
                 const prev = s[evt.modelId] ?? { content: "" }
                 return {
@@ -219,7 +214,6 @@ export default function Page() {
               })
               doneCountRef.current += 1
             } else if (evt.type === "error") {
-              console.error(`Error for ${evt.modelId}:`, evt.error)
               setByModel((s) => {
                 const prev = s[evt.modelId] ?? { content: "" }
                 return {
@@ -234,12 +228,9 @@ export default function Page() {
               })
               doneCountRef.current += 1
             } else if (evt.type === "end") {
-              console.log(`All models completed. Total time: ${evt.totalMs}ms`)
               setTotalMs(evt.totalMs)
               clearTimeout(streamTimeout)
               break
-            } else if (evt.type === "ping") {
-              // Keep-alive ping, ignore
             }
           } catch (parseErr) {
             console.warn("Failed to parse event line:", line.substring(0, 100))
@@ -282,149 +273,127 @@ export default function Page() {
   const hasActiveStreams = submitting && completedModels < expectedModelsRef.current
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 py-8">
-      <header className="mb-8">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-balance text-3xl font-semibold tracking-tight">LLM Wars</h1>
-          <Button variant="outline" asChild>
-            <a href={githubUrl} target="_blank" rel="noopener noreferrer">
+    <div className="flex flex-col h-screen">
+      <header className="p-4 border-b flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">LLM Wars</h1>
+        <img src="/Gravix Layer-Photoroom.png" alt="Gravix Layer Logo" className="w-32 h-auto" />
+        <div className="flex items-center gap-2">
+          <a href={githubUrl} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm">
+              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.109-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+              </svg>
               GitHub
-            </a>
-          </Button>
+            </Button>
+          </a>
+          <ThemeToggler />
         </div>
-        <p className="text-sm text-muted-foreground mt-2 max-w-prose">
-          Enter a prompt, select models from Gravix Layer, and compare responses side-by-side with live streaming,
-          latency and token usage.
-        </p>
       </header>
 
-      <section className="grid gap-6 md:grid-cols-[1.2fr_.8fr]">
-        <Card className="order-2 md:order-1">
-          <CardHeader className="pb-1">
-            <CardTitle className="text-base">Your Prompt</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <form className="grid gap-4" onSubmit={onSubmit}>
-              <div className="grid gap-2">
-                <Textarea
-                  id="prompt"
-                  aria-label="Prompt"
-                  placeholder="Ask anything..."
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={14}
-                  disabled={disabled}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="temperature">Temperature</Label>
-                <div className="flex items-center gap-3">
-                  <Slider
-                    id="temperature"
-                    min={0}
-                    max={2}
-                    step={0.1}
-                    value={[tempNumber]}
-                    onValueChange={(vals) => setTemperature(String(vals[0] ?? 0.7))}
-                    disabled={disabled}
-                    className="w-full"
-                    aria-label="Temperature"
-                  />
-                  <Badge variant="secondary" className="min-w-12 justify-center">
-                    {tempNumber.toFixed(1)}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Higher values increase creativity, lower values increase determinism.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Button type="submit" disabled={disabled}>
-                  {submitting ? `Generating… (${completedModels}/${expectedModelsRef.current})` : "Generate"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setPrompt("")
-                    setByModel({})
-                    setTotalMs(null)
-                    doneCountRef.current = 0
-                    expectedModelsRef.current = 0
-                  }}
-                  disabled={submitting}
-                >
-                  Reset
-                </Button>
-                {typeof totalMs === "number" && (
-                  <Badge variant="outline" className="font-mono">
-                    {totalMs} ms
-                  </Badge>
-                )}
-                {hasActiveStreams && (
-                  <Badge variant="secondary" className="font-mono">
-                    {completedModels}/{expectedModelsRef.current} complete
-                  </Badge>
-                )}
-              </div>
-            </form>
-          </CardContent>
-          <CardFooter className="pt-2">
-            <p className="text-xs text-muted-foreground">
-              Your prompt is streamed concurrently to all selected models.
+      <main className="flex-1 overflow-y-auto p-4">
+        {sortedModelIds.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-4">
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold tracking-tight">
+                Welcome to LLM Wars
+              </h1>
+            </div>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+              Your arena for battling Large Language Models, powered by the Gravix Layer API. Select your contenders, give them a prompt, and witness their responses in a head-to-head comparison.
             </p>
-          </CardFooter>
-        </Card>
-
-        <div className="order-1 md:order-2">
-          <ModelSelector models={models} selected={selected} onChange={setSelected} disabled={disabled} />
-          {modelsError && (
-            <p className="mt-3 text-sm text-destructive">
-              Failed to load models. Ensure the API key is set and the endpoint is reachable.
-            </p>
-          )}
-          {modelsLoading && <p className="mt-3 text-sm text-muted-foreground">Loading models…</p>}
-        </div>
-      </section>
-
-      <Separator className="my-8" />
-
-      <section className={`grid gap-4 items-stretch ${gridColsClass}`}>
-        {Object.keys(byModel).length > 0 ? (
-          sortedModelIds.map((modelId) => {
-            const s = byModel[modelId]
-            return (
+            <div className="flex flex-wrap justify-center gap-4 text-left">
+              <div className="p-4 border rounded-lg bg-card max-w-xs">
+                <h3 className="font-semibold mb-2">1. Select Models</h3>
+                <p className="text-sm text-muted-foreground">Use the dropdown at the bottom to choose from a variety of cutting-edge language models.</p>
+              </div>
+              <div className="p-4 border rounded-lg bg-card max-w-xs">
+                <h3 className="font-semibold mb-2">2. Craft Your Prompt</h3>
+                <p className="text-sm text-muted-foreground">Enter any question, instruction, or creative idea into the prompt box.</p>
+              </div>
+              <div className="p-4 border rounded-lg bg-card max-w-xs">
+                <h3 className="font-semibold mb-2">3. Compare Responses</h3>
+                <p className="text-sm text-muted-foreground">Analyze the generated outputs side-by-side to see which model performs best for your task.</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className={`grid gap-4 ${gridColsClass}`}>
+            {sortedModelIds.map((modelId) => (
               <ResponseCard
                 key={modelId}
                 modelId={modelId}
-                latencyMs={s?.latencyMs}
-                ttfbMs={s?.ttfbMs}
-                tokens={s?.tokens}
-                content={s?.content}
-                error={s?.error}
+                name={models.find((m) => m.id === modelId)?.name ?? modelId}
+                state={byModel[modelId]}
+                totalMs={totalMs}
               />
-            )
-          })
-        ) : (
-          <p className="text-sm text-muted-foreground">Responses will appear here.</p>
+            ))}
+          </div>
         )}
-      </section>
+      </main>
 
-      <footer className="mt-10 flex items-center justify-center">
-        <p className="text-xs text-muted-foreground">
-          Powered by{" "}
-          <a
-            className="underline underline-offset-4 hover:text-foreground"
-            href="https://platform.gravixlayer.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Gravix Layer
-          </a>
-        </p>
+      <footer className="p-4">
+        <div className="max-w-4xl mx-auto p-3 bg-card border rounded-2xl shadow-lg">
+          <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="prompt">Enter your prompt</Label>
+              <Textarea
+                id="prompt"
+                name="prompt"
+                placeholder="Tell me a story about a robot who learns to love..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                disabled={disabled}
+                className="h-16 resize-none"
+              />
+              <div className="flex gap-2 items-center">
+                <Button type="submit" disabled={disabled}>
+                  {hasActiveStreams ? `Generating...` : "Generate"}
+                </Button>
+                <Button type="button" variant="outline" onClick={handleReset} disabled={disabled}>
+                  Reset
+                </Button>
+                <div className="flex items-center gap-2 w-96 ml-4">
+                  <Label className="text-xs">Temp</Label>
+                  <Slider
+                    value={[tempNumber]}
+                    onValueChange={([v]) => setTemperature(String(v))}
+                    min={0}
+                    max={2}
+                    step={0.01}
+                    disabled={disabled}
+                  />
+                  <Badge variant="outline" className="h-6">{tempNumber.toFixed(2)}</Badge>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 block">Models</Label>
+                <ModelSelector
+                  models={models}
+                  selected={selected}
+                  onChange={setSelected}
+                  loading={modelsLoading}
+                  error={modelsError}
+                />
+              </div>
+            </div>
+          </form>
+          <div className="flex justify-center mt-4">
+            <p className="text-xs text-muted-foreground">
+              Powered by{" "}
+              <a
+                href="https://gravix.layer.com"
+                className="underline font-bold"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Gravix Layer
+              </a>
+            </p>
+          </div>
+        </div>
       </footer>
-    </main>
+    </div>
   )
 }

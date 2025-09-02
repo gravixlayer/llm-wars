@@ -7,31 +7,35 @@ import { MarkdownViewer } from "@/components/markdown-viewer"
 
 export function ResponseCard({
   modelId,
-  latencyMs,
-  ttfbMs,
-  tokens,
-  content,
-  error,
+  name,
+  state,
+  totalMs,
 }: {
   modelId: string
-  latencyMs?: number
-  ttfbMs?: number
-  tokens?: { prompt?: number | null; completion?: number | null; total?: number | null }
-  content?: string
-  error?: string
+  name: string
+  state: {
+    content: string
+    ttfbMs?: number
+    latencyMs?: number
+    tokens?: { prompt?: number | null; completion?: number | null; total?: number | null }
+    error?: string
+    isComplete?: boolean
+  }
+  totalMs: number | null
 }) {
+  const { content, ttfbMs, latencyMs, tokens, error } = state
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base text-pretty">{modelId}</CardTitle>
+          <CardTitle className="text-base text-pretty">{name}</CardTitle>
           <div className="flex items-center gap-2">
             {typeof ttfbMs === "number" && <Badge variant="outline">TTFB {ttfbMs} ms</Badge>}
             {typeof latencyMs === "number" && <Badge variant="secondary">{latencyMs} ms</Badge>}
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1">
+      <CardContent className="flex-1 overflow-y-auto max-h-96">
         {error ? (
           <Alert variant="destructive">
             <AlertTitle>Error</AlertTitle>
