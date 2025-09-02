@@ -1,30 +1,88 @@
-# GraviXLayer API integration
+# LLM Wars
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+LLM Wars is a web application that allows you to compare responses from multiple Large Language Models (LLMs) side-by-side. Enter a single prompt, select the models you want to test, and see how they perform. This project is powered by the Gravix Layer API.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/rupins-projects-3e507045/v0-gravi-xl-ayer-api-integration)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/NTFGkZhScLV)
+## Getting Started
 
-## Overview
+To get a local copy up and running, follow these simple steps.
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+### Prerequisites
+
+You need to have Node.js and npm (or pnpm/yarn) installed on your machine.
+
+### Installation
+
+1.  Clone the repository:
+    ```sh
+    git clone https://github.com/gravixlayer/llm-wars.git
+    ```
+2.  Navigate to the project directory:
+    ```sh
+    cd llm-wars
+    ```
+3.  Install the dependencies:
+    ```sh
+    npm install
+    # or
+    pnpm install
+    # or
+    yarn install
+    ```
+
+### Running the Application
+
+1.  Start the development server:
+    ```sh
+    npm run dev
+    # or
+    pnpm dev
+    # or
+    yarn dev
+    ```
+2.  Open your browser and go to `http://localhost:3000`.
+
+## Usage
+
+-   **Select Models**: Choose one or more LLMs from the "Models" dropdown list.
+-   **Enter Your Prompt**: Type any question, instruction, or text you want the models to respond to in the prompt box.
+-   **Adjust Temperature**: Use the slider to control the randomness of the output. A lower value makes the output more deterministic, while a higher value makes it more creative.
+-   **Generate**: Click the "Generate" button to send your prompt to the selected models.
+-   **Compare**: The responses will appear in cards, allowing you to compare their quality, speed, and content.
 
 ## Deployment
 
-Your project is live at:
+To deploy this application to a production environment, you can build the app and start the server.
 
-**[https://vercel.com/rupins-projects-3e507045/v0-gravi-xl-ayer-api-integration](https://vercel.com/rupins-projects-3e507045/v0-gravi-xl-ayer-api-integration)**
+1.  Build the application:
+    ```sh
+    npm run build
+    # or
+    pnpm build
+    # or
+    yarn build
+    ```
+2.  Start the server:
+    ```sh
+    npm run start
+    # or
+    pnpm start
+    # or
+    yarn start
+    ```
 
-## Build your app
+Make sure to set any required environment variables in a `.env.local` file.
 
-Continue building your app on:
+## Security & Privacy
 
-**[https://v0.app/chat/projects/NTFGkZhScLV](https://v0.app/chat/projects/NTFGkZhScLV)**
+This application is designed with your privacy in mind.
+-   No user accounts are required.
+-   The prompts you enter and the responses you receive are not stored or logged.
+-   Everything is cleared when you refresh or leave the site.
 
-## How It Works
+## License
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## Disclaimer
+
+We do not store or save your prompts or the generated responses. All data is ephemeral and is cleared as soon as you leave or refresh the site. Your privacy and security are our priority.
