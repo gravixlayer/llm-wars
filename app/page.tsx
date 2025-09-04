@@ -383,7 +383,7 @@ export default function Page() {
             <p className="text-xs text-muted-foreground">
               Powered by{" "}
               <a
-                href="https://gravix.layer.com"
+                href="https://gravixlayer.com"
                 className="underline font-bold"
                 target="_blank"
                 rel="noopener noreferrer"
