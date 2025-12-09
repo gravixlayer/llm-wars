@@ -28,7 +28,7 @@ async function fetchWithTimeout(input: string, init: RequestInit = {}, timeoutMs
   }
 }
 
-const INFERENCE_URL = "https://api.gravixlayer.com/v1"
+const INFERENCE_URL = "https://api.gravixlayer.com/v1/inference"
 
 export const dynamic = "force-dynamic"
 
